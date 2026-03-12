@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4's Problem 랜덤 뽑기</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <h1>4's Problem 랜덤 숫자 뽑기</h1>
+        <p>0~50 중 랜덤 숫자를 뽑고, 타이머 종료 후 정답을 확인하세요.</p>
+      </header>
+
+      <section class="card controls">
+        <div class="timer-config">
+          <label for="timerSeconds">타이머(초)</label>
+          <input id="timerSeconds" type="number" min="1" value="20" />
+        </div>
+        <button id="drawBtn" class="primary">문제 뽑기</button>
+        <div id="timerStatus" class="timer-status">대기 중</div>
+      </section>
+
+      <section class="card problem-board">
+        <h2>현재 문제</h2>
+        <div id="currentNumber" class="current-number">?</div>
+        <div id="difficultyBadge" class="difficulty-badge hidden"></div>
+        <button id="answerBtn" class="secondary hidden">정답 보기</button>
+        <pre id="answerText" class="answer-text hidden"></pre>
+      </section>
+
+      <section class="card students">
+        <h2>학생 관리 / 점수 반영</h2>
+        <div class="student-input-row">
+          <input id="studentName" type="text" placeholder="학생 이름 입력" />
+          <button id="addStudentBtn">학생 추가</button>
+        </div>
+        <ul id="studentList" class="student-list"></ul>
+      </section>
+
+      <section class="card leaderboard">
+        <h2>실시간 순위</h2>
+        <div id="podium" class="podium"></div>
+        <details>
+          <summary>전체 순위 보기</summary>
+          <ol id="fullRanking" class="full-ranking"></ol>
+        </details>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
