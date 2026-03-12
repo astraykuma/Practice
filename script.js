@@ -69,6 +69,7 @@ const addStudentBtn = document.getElementById("addStudentBtn");
 const studentList = document.getElementById("studentList");
 const podium = document.getElementById("podium");
 const fullRanking = document.getElementById("fullRanking");
+const manualScoreValueInput = document.getElementById("manualScoreValue");
 
 let currentNumber = null;
 let currentScore = 0;
@@ -91,7 +92,8 @@ function calculateDifficulty(expression) {
 function saveState() {
   const payload = {
     students,
-    timerSeconds: Number(timerInput.value) || DEFAULT_TIMER_SECONDS
+    timerSeconds: Number(timerInput.value) || DEFAULT_TIMER_SECONDS,
+    manualScoreValue: getManualScoreValue()
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 }
@@ -114,9 +116,29 @@ function loadState() {
     if (Number.isFinite(parsed.timerSeconds) && parsed.timerSeconds > 0) {
       timerInput.value = String(parsed.timerSeconds);
     }
+
+    if (Number.isFinite(parsed.manualScoreValue) && parsed.manualScoreValue > 0) {
+      manualScoreValueInput.value = String(Math.floor(parsed.manualScoreValue));
+    }
   } catch {
     localStorage.removeItem(STORAGE_KEY);
   }
+}
+
+
+function getManualScoreValue() {
+  const value = Number(manualScoreValueInput.value);
+  if (!Number.isFinite(value) || value <= 0) {
+    return 1;
+  }
+  return Math.floor(value);
+}
+
+function applyManualScore(student, delta) {
+  student.score += delta;
+  saveState();
+  renderLeaderboard();
+  renderStudents();
 }
 
 function renderStudents() {
@@ -137,6 +159,9 @@ function renderStudents() {
     const info = document.createElement("div");
     info.innerHTML = `<strong>${student.name}</strong><span>${student.score}점</span>`;
 
+    const actions = document.createElement("div");
+    actions.className = "student-actions";
+
     const markBtn = document.createElement("button");
     markBtn.textContent = "정답 처리";
     markBtn.disabled = currentNumber === null;
@@ -145,13 +170,27 @@ function renderStudents() {
         alert("먼저 문제를 뽑아 주세요.");
         return;
       }
-      student.score += currentScore;
-      saveState();
-      renderLeaderboard();
-      renderStudents();
+      applyManualScore(student, currentScore);
     });
 
-    li.append(info, markBtn);
+    const plusBtn = document.createElement("button");
+    plusBtn.textContent = "+";
+    plusBtn.title = "수동 점수 올리기";
+    plusBtn.addEventListener("click", () => {
+      const value = getManualScoreValue();
+      applyManualScore(student, value);
+    });
+
+    const minusBtn = document.createElement("button");
+    minusBtn.textContent = "-";
+    minusBtn.title = "수동 점수 내리기";
+    minusBtn.addEventListener("click", () => {
+      const value = getManualScoreValue();
+      applyManualScore(student, -value);
+    });
+
+    actions.append(markBtn, plusBtn, minusBtn);
+    li.append(info, actions);
     studentList.appendChild(li);
   });
 }
@@ -195,6 +234,7 @@ function resetAppState() {
   currentScore = 0;
 
   timerInput.value = String(DEFAULT_TIMER_SECONDS);
+  manualScoreValueInput.value = "5";
   timerStatus.textContent = "대기 중";
   currentNumberEl.textContent = "?";
   difficultyBadge.classList.add("hidden");
@@ -274,6 +314,7 @@ addStudentBtn.addEventListener("click", () => {
 });
 
 timerInput.addEventListener("change", saveState);
+manualScoreValueInput.addEventListener("change", saveState);
 
 drawBtn.addEventListener("click", startDraw);
 resetBtn.addEventListener("click", resetAppState);
