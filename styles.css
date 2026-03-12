@@ -1,0 +1,137 @@
+:root {
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+  color: #1f2937;
+  background: #f3f4f6;
+}
+
+body {
+  margin: 0;
+  padding: 2rem 1rem;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.timer-config {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+input,
+button {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+button {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: #2563eb;
+  color: white;
+}
+
+.secondary {
+  background: #16a34a;
+  color: white;
+}
+
+.timer-status {
+  font-weight: 700;
+}
+
+.problem-board {
+  text-align: center;
+}
+
+.current-number {
+  font-size: 4rem;
+  font-weight: 800;
+  margin: 0.5rem 0;
+}
+
+.difficulty-badge {
+  margin-bottom: 1rem;
+  color: #7c3aed;
+  font-weight: 700;
+}
+
+.answer-text {
+  text-align: left;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 0.75rem;
+  white-space: pre-wrap;
+}
+
+.student-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.student-list {
+  list-style: none;
+  padding: 0;
+}
+
+.student-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.55rem 0;
+}
+
+.student-item div {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.placeholder {
+  color: #6b7280;
+}
+
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 0.7rem;
+}
+
+.podium-block {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 0.7rem;
+  text-align: center;
+}
+
+.hidden {
+  display: none;
+}
