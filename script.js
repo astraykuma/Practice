@@ -52,6 +52,8 @@ const problems = {
   50: "4! / 4 + 44"
 };
 
+const STORAGE_KEY = "fours-problem-classroom-v1";
+
 const drawBtn = document.getElementById("drawBtn");
 const answerBtn = document.getElementById("answerBtn");
 const timerStatus = document.getElementById("timerStatus");
@@ -70,7 +72,7 @@ let currentNumber = null;
 let currentScore = 0;
 let timerHandle = null;
 let countdownHandle = null;
-const students = [];
+let students = [];
 
 function calculateDifficulty(expression) {
   let score = 1;
@@ -82,6 +84,37 @@ function calculateDifficulty(expression) {
   if (score <= 2) return { stars: 1, points: 10, label: "★ (기본)" };
   if (score <= 4) return { stars: 2, points: 20, label: "★★ (도전)" };
   return { stars: 3, points: 30, label: "★★★ (어려움)" };
+}
+
+function saveState() {
+  const payload = {
+    students,
+    timerSeconds: Number(timerInput.value) || 20
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed.students)) {
+      students = parsed.students.filter(
+        (student) =>
+          student &&
+          typeof student.name === "string" &&
+          Number.isFinite(student.score)
+      );
+    }
+
+    if (Number.isFinite(parsed.timerSeconds) && parsed.timerSeconds > 0) {
+      timerInput.value = String(parsed.timerSeconds);
+    }
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+  }
 }
 
 function renderStudents() {
@@ -111,6 +144,7 @@ function renderStudents() {
         return;
       }
       student.score += currentScore;
+      saveState();
       renderLeaderboard();
       renderStudents();
     });
@@ -159,6 +193,8 @@ function startDraw() {
     return;
   }
 
+  saveState();
+
   currentNumber = Math.floor(Math.random() * 51);
   currentNumberEl.textContent = String(currentNumber);
 
@@ -205,12 +241,16 @@ addStudentBtn.addEventListener("click", () => {
 
   students.push({ name, score: 0 });
   studentNameInput.value = "";
+  saveState();
   renderStudents();
   renderLeaderboard();
 });
 
+timerInput.addEventListener("change", saveState);
+
 drawBtn.addEventListener("click", startDraw);
 answerBtn.addEventListener("click", revealAnswer);
 
+loadState();
 renderStudents();
 renderLeaderboard();
