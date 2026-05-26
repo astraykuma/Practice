@@ -1,256 +1,218 @@
-const problems = {
-  0: "44 - 44",
-  1: "44 / 44 or (4 + 4)/(4 + 4) or (4/4) / (4/4) or ((4! - 4) / 4) - 4",
-  2: "4/4 + 4/4",
-  3: "(4 + 4 + 4) / 4",
-  4: "4 × (4 - 4) + 4",
-  5: "(4 × 4 + 4) / 4",
-  6: "4 × .4 + 4.4",
-  7: "44 / 4 - 4",
-  8: "4 + 4.4 - .4",
-  9: "4/4 + 4 + 4",
-  10: "44 / 4.4",
-  11: "4/.4 + 4/4",
-  12: "(44 + 4) / 4",
-  13: "4! - 44/4",
-  14: "4 × (4 - .4) - .4",
-  15: "44 / 4 + 4",
-  16: ".4 × (44 - 4)",
-  17: "4/4 + 4 × 4",
-  18: "44 × .4 + .4",
-  19: "4! - 4 - 4/4",
-  20: "4 × (4/4 + 4)",
-  21: "(4.4 + 4)/.4",
-  22: "44 × √4 / 4",
-  23: "(4 × 4! - 4)/ 4",
-  24: "4 × 4 + 4 + 4",
-  25: "(4 × 4! + 4) / 4",
-  26: "4/.4 + 4×4",
-  27: "4 - 4/4 + 4!",
-  28: "44 - 4 × 4",
-  29: "4/.4/.4 + 4",
-  30: "(4 + 4 + 4) / .4",
-  31: "(4! + 4) / 4 + 4!",
-  32: "4 × 4 + 4 × 4",
-  33: "(4 - .4)/.4 + 4!",
-  34: "44 - 4/.4",
-  35: "44 / 4 + 4!",
-  36: "44 - 4 - 4",
-  37: "(√4 + 4!)/√4 + 4!",
-  38: "44 - 4!/4",
-  39: "(4 × 4 - .4)/.4",
-  40: "44 - √(4 × 4)",
-  41: "(√4 + 4!)/.4 - 4!",
-  42: "√4 + 44 - 4",
-  43: "44 - 4/4",
-  44: "44.4 - .4",
-  45: "4/4 + 44",
-  46: "44 - √4 + 4",
-  47: "4! + 4! - 4/4",
-  48: "4 × (4 + 4 + 4)",
-  49: "(4! - 4.4) / .4",
-  50: "4! / 4 + 44"
-};
+const canvas = document.getElementById("geomCanvas");
+const ctx = canvas.getContext("2d");
 
-const STORAGE_KEY = "fours-problem-classroom-v1";
+const questionType = document.getElementById("questionType");
+const newProblemBtn = document.getElementById("newProblemBtn");
+const hintBtn = document.getElementById("hintBtn");
+const questionText = document.getElementById("questionText");
+const answerSelect = document.getElementById("answerSelect");
+const checkBtn = document.getElementById("checkBtn");
+const showBtn = document.getElementById("showBtn");
+const resultText = document.getElementById("resultText");
 
-const drawBtn = document.getElementById("drawBtn");
-const answerBtn = document.getElementById("answerBtn");
-const timerStatus = document.getElementById("timerStatus");
-const timerInput = document.getElementById("timerSeconds");
-const currentNumberEl = document.getElementById("currentNumber");
-const answerText = document.getElementById("answerText");
-const difficultyBadge = document.getElementById("difficultyBadge");
+let state = null;
 
-const studentNameInput = document.getElementById("studentName");
-const addStudentBtn = document.getElementById("addStudentBtn");
-const studentList = document.getElementById("studentList");
-const podium = document.getElementById("podium");
-const fullRanking = document.getElementById("fullRanking");
-
-let currentNumber = null;
-let currentScore = 0;
-let timerHandle = null;
-let countdownHandle = null;
-let students = [];
-
-function calculateDifficulty(expression) {
-  let score = 1;
-  if (/[√!]/.test(expression)) score += 1;
-  if (/\.4|4\.4/.test(expression)) score += 1;
-  if (expression.includes("/") && expression.includes("×")) score += 1;
-  if (expression.length > 18) score += 1;
-
-  if (score <= 2) return { stars: 1, points: 10, label: "★ (기본)" };
-  if (score <= 4) return { stars: 2, points: 20, label: "★★ (도전)" };
-  return { stars: 3, points: 30, label: "★★★ (어려움)" };
+function rand(min, max) {
+  return Math.random() * (max - min) + min;
 }
 
-function saveState() {
-  const payload = {
-    students,
-    timerSeconds: Number(timerInput.value) || 20
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+function makeLine(name, x1, y1, x2, y2, family = "extra") {
+  return { name, x1, y1, x2, y2, family };
 }
 
-function loadState() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return;
+function intersection(l1, l2) {
+  const x1 = l1.x1, y1 = l1.y1, x2 = l1.x2, y2 = l1.y2;
+  const x3 = l2.x1, y3 = l2.y1, x4 = l2.x2, y4 = l2.y2;
+  const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+  if (Math.abs(den) < 1e-9) return null;
+  const px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / den;
+  const py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / den;
+  return { x: px, y: py };
+}
 
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed.students)) {
-      students = parsed.students.filter(
-        (student) =>
-          student &&
-          typeof student.name === "string" &&
-          Number.isFinite(student.score)
-      );
-    }
+function directions(line) {
+  const dx = line.x2 - line.x1;
+  const dy = line.y2 - line.y1;
+  const len = Math.hypot(dx, dy);
+  return [
+    { x: dx / len, y: dy / len },
+    { x: -dx / len, y: -dy / len }
+  ];
+}
 
-    if (Number.isFinite(parsed.timerSeconds) && parsed.timerSeconds > 0) {
-      timerInput.value = String(parsed.timerSeconds);
+function anglePos(v1, v2) {
+  return { x: (v1.x + v2.x) * 20, y: (v1.y + v2.y) * 20 };
+}
+
+function buildProblem() {
+  const p = { x: 80, y: rand(120, 160) };
+  const q = { x: 760, y: rand(220, 300) };
+  const tilt = rand(-0.2, 0.25);
+
+  const base1 = makeLine("l1", p.x, p.y, 760, p.y + (760 - p.x) * tilt, "main");
+  const base2 = makeLine("l2", 60, q.y, q.x, q.y + (q.x - 60) * (tilt + rand(-0.1, 0.1)), "main");
+
+  const tx = rand(260, 560);
+  const transversal = makeLine("t", tx - 140, 40, tx + 80, 400, "main");
+
+  const extras = [
+    makeLine("e1", rand(80, 220), 360, rand(720, 780), rand(40, 120)),
+    makeLine("e2", rand(80, 740), rand(50, 390), rand(80, 740), rand(50, 390))
+  ];
+
+  const i1 = intersection(base1, transversal);
+  const i2 = intersection(base2, transversal);
+  if (!i1 || !i2) return buildProblem();
+
+  const tDirs = directions(transversal);
+  const b1Dirs = directions(base1);
+  const b2Dirs = directions(base2);
+
+  const angles = [];
+  let id = 1;
+
+  for (const a of b1Dirs) {
+    for (const b of tDirs) {
+      const pos = anglePos(a, b);
+      angles.push({ id: id++, at: "top", x: i1.x + pos.x, y: i1.y + pos.y, key: `${Math.sign(a.x)}_${Math.sign(b.y)}` });
     }
-  } catch {
-    localStorage.removeItem(STORAGE_KEY);
   }
-}
-
-function renderStudents() {
-  studentList.innerHTML = "";
-
-  if (students.length === 0) {
-    const li = document.createElement("li");
-    li.textContent = "학생을 추가해 주세요.";
-    li.className = "placeholder";
-    studentList.appendChild(li);
-    return;
+  for (const a of b2Dirs) {
+    for (const b of tDirs) {
+      const pos = anglePos(a, b);
+      angles.push({ id: id++, at: "bottom", x: i2.x + pos.x, y: i2.y + pos.y, key: `${Math.sign(a.x)}_${Math.sign(b.y)}` });
+    }
   }
 
-  students.forEach((student) => {
-    const li = document.createElement("li");
-    li.className = "student-item";
+  const topAngles = angles.filter((x) => x.at === "top");
+  const bottomAngles = angles.filter((x) => x.at === "bottom");
+  const source = topAngles[Math.floor(Math.random() * topAngles.length)];
 
-    const info = document.createElement("div");
-    info.innerHTML = `<strong>${student.name}</strong><span>${student.score}점</span>`;
-
-    const markBtn = document.createElement("button");
-    markBtn.textContent = "정답 처리";
-    markBtn.disabled = currentNumber === null;
-    markBtn.addEventListener("click", () => {
-      if (currentNumber === null) {
-        alert("먼저 문제를 뽑아 주세요.");
-        return;
-      }
-      student.score += currentScore;
-      saveState();
-      renderLeaderboard();
-      renderStudents();
-    });
-
-    li.append(info, markBtn);
-    studentList.appendChild(li);
-  });
-}
-
-function renderLeaderboard() {
-  const ranked = [...students].sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
-
-  podium.innerHTML = "";
-  const top3 = ranked.slice(0, 3);
-
-  if (top3.length === 0) {
-    podium.textContent = "아직 순위 데이터가 없습니다.";
+  let target;
+  if (questionType.value === "corresponding") {
+    target = bottomAngles.find((x) => x.key === source.key);
   } else {
-    top3.forEach((student, index) => {
-      const block = document.createElement("article");
-      block.className = "podium-block";
-      block.innerHTML = `<h3>${index + 1}등</h3><p>${student.name}</p><strong>${student.score}점</strong>`;
-      podium.appendChild(block);
-    });
+    target = bottomAngles.find((x) => x.key.split("_")[0] !== source.key.split("_")[0] && x.key.split("_")[1] === source.key.split("_")[1]);
   }
 
-  fullRanking.innerHTML = "";
-  ranked.forEach((student, index) => {
-    const item = document.createElement("li");
-    item.textContent = `${index + 1}등 - ${student.name} (${student.score}점)`;
-    fullRanking.appendChild(item);
+  return { lines: [base1, base2, transversal, ...extras], source, target, i1, i2 };
+}
+
+function draw(hint = false) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  state.lines.forEach((line) => {
+    const isMain = line.family === "main";
+    const isFocus = hint && isMain;
+    ctx.strokeStyle = hint ? (isFocus ? "#0f172a" : "rgba(148,163,184,0.35)") : "#334155";
+    ctx.setLineDash(hint && !isFocus ? [6, 6] : []);
+    ctx.lineWidth = isFocus ? 3 : 2;
+    ctx.beginPath();
+    ctx.moveTo(line.x1, line.y1);
+    ctx.lineTo(line.x2, line.y2);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  const allAngles = [state.source, ...Array.from({ length: 7 }, (_, i) => i + 1)
+    .map((n) => n <= state.source.id ? n : n + 1)
+    .map((id) => {
+      const sourcePool = [];
+      for (let k = 1; k <= 8; k++) sourcePool.push(k);
+      return sourcePool;
+    })];
+
+  const labels = [];
+  for (let i = 1; i <= 8; i++) {
+    const a = i <= 4 ? state.source.at === "top" ? i : i : i;
+    labels.push(i);
+  }
+
+  const all = [];
+  const top = []; const bottom = [];
+  // 재계산보다 단순 저장형으로 표기
+  for (let i = 1; i <= 8; i++) {
+    // no-op, ids already 1..8 in build
+  }
+
+  const angleMarks = [];
+  const byId = {};
+  const sorted = [state.source, state.target];
+  state.__allAngles.forEach((a) => {
+    byId[a.id] = a;
+    angleMarks.push(a);
+  });
+
+  angleMarks.forEach((a) => {
+    ctx.fillStyle = a.id === state.source.id ? "#dc2626" : "#1d4ed8";
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "white";
+    ctx.font = "12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(a.id), a.x, a.y);
   });
 }
 
-function revealAnswer() {
-  if (currentNumber === null) return;
-  answerBtn.classList.remove("hidden");
-  answerText.classList.remove("hidden");
-  answerText.textContent = `${currentNumber} = ${problems[currentNumber]}`;
+function refreshAnswerOptions() {
+  answerSelect.innerHTML = "";
+  for (let i = 1; i <= 8; i++) {
+    const option = document.createElement("option");
+    option.value = String(i);
+    option.textContent = `${i}번 각`;
+    answerSelect.appendChild(option);
+  }
 }
 
-function startDraw() {
-  const seconds = Number(timerInput.value);
-  if (!Number.isFinite(seconds) || seconds <= 0) {
-    alert("타이머는 1초 이상으로 입력해 주세요.");
-    return;
+function newProblem() {
+  state = buildProblem();
+  state.__allAngles = [];
+
+  const topBottom = [];
+  // buildProblem 내부 규칙으로 id 1..8가 결정되므로 동일하게 재구성
+  const main = state.lines.filter((l) => l.family === "main");
+  const b1 = main[0], b2 = main[1], t = main[2];
+  const tDirs = directions(t);
+  const b1Dirs = directions(b1);
+  const b2Dirs = directions(b2);
+  let id = 1;
+  for (const a of b1Dirs) for (const b of tDirs) {
+    const pos = anglePos(a, b);
+    state.__allAngles.push({ id: id++, at: "top", x: state.i1.x + pos.x, y: state.i1.y + pos.y, key: `${Math.sign(a.x)}_${Math.sign(b.y)}` });
+  }
+  for (const a of b2Dirs) for (const b of tDirs) {
+    const pos = anglePos(a, b);
+    state.__allAngles.push({ id: id++, at: "bottom", x: state.i2.x + pos.x, y: state.i2.y + pos.y, key: `${Math.sign(a.x)}_${Math.sign(b.y)}` });
   }
 
-  saveState();
+  state.source = state.__allAngles.find((x) => x.id === state.source.id);
+  state.target = state.__allAngles.find((x) => x.id === state.target.id);
 
-  currentNumber = Math.floor(Math.random() * 51);
-  currentNumberEl.textContent = String(currentNumber);
-
-  const difficulty = calculateDifficulty(problems[currentNumber]);
-  currentScore = difficulty.points;
-  difficultyBadge.textContent = `난이도 ${difficulty.label} · 정답 점수 ${difficulty.points}점`;
-  difficultyBadge.classList.remove("hidden");
-
-  answerBtn.classList.add("hidden");
-  answerText.classList.add("hidden");
-  answerText.textContent = "";
-
-  if (timerHandle) clearTimeout(timerHandle);
-  if (countdownHandle) clearInterval(countdownHandle);
-
-  let left = seconds;
-  timerStatus.textContent = `${left}초 후 정답 공개 가능`;
-
-  countdownHandle = setInterval(() => {
-    left -= 1;
-    if (left > 0) {
-      timerStatus.textContent = `${left}초 후 정답 공개 가능`;
-      return;
-    }
-    clearInterval(countdownHandle);
-  }, 1000);
-
-  timerHandle = setTimeout(() => {
-    timerStatus.textContent = "타이머 종료! 정답 보기 버튼을 눌러주세요.";
-    answerBtn.classList.remove("hidden");
-  }, seconds * 1000);
-
-  renderStudents();
+  questionText.textContent = `빨간 ${state.source.id}번 각과 ${questionType.value === "corresponding" ? "동위각" : "엇각"}인 각 번호를 고르세요.`;
+  resultText.textContent = "";
+  draw(false);
 }
 
-addStudentBtn.addEventListener("click", () => {
-  const name = studentNameInput.value.trim();
-  if (!name) return;
-
-  if (students.some((student) => student.name === name)) {
-    alert("이미 등록된 학생입니다.");
-    return;
+newProblemBtn.addEventListener("click", () => newProblem());
+hintBtn.addEventListener("click", () => draw(true));
+checkBtn.addEventListener("click", () => {
+  const ans = Number(answerSelect.value);
+  if (ans === state.target.id) {
+    resultText.textContent = `정답! ${state.target.id}번이 맞습니다.`;
+    resultText.className = "result ok";
+  } else {
+    resultText.textContent = `오답! 다시 생각해보세요. (힌트: 핵심 선분 강조 버튼)`;
+    resultText.className = "result wrong";
   }
-
-  students.push({ name, score: 0 });
-  studentNameInput.value = "";
-  saveState();
-  renderStudents();
-  renderLeaderboard();
+});
+showBtn.addEventListener("click", () => {
+  resultText.textContent = `정답은 ${state.target.id}번 각입니다.`;
+  resultText.className = "result";
 });
 
-timerInput.addEventListener("change", saveState);
-
-drawBtn.addEventListener("click", startDraw);
-answerBtn.addEventListener("click", revealAnswer);
-
-loadState();
-renderStudents();
-renderLeaderboard();
+refreshAnswerOptions();
+newProblem();
