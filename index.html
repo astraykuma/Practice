@@ -3,49 +3,51 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>4's Problem 랜덤 뽑기</title>
+    <title>동위각·엇각 시각화 훈련기</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="container">
       <header>
-        <h1>4's Problem 랜덤 숫자 뽑기</h1>
-        <p>0~50 중 랜덤 숫자를 뽑고, 타이머 종료 후 정답을 확인하세요.</p>
+        <h1>중1 수학: 동위각·엇각 시각화 훈련기</h1>
+        <p>핵심 3개 선분(두 기준선 + 한 횡단선)만 강조해서 각 관계를 찾는 연습을 합니다.</p>
       </header>
 
       <section class="card controls">
-        <div class="timer-config">
-          <label for="timerSeconds">타이머(초)</label>
-          <input id="timerSeconds" type="number" min="1" value="20" />
+        <div class="row">
+          <label for="questionType">문제 유형</label>
+          <select id="questionType">
+            <option value="alternate">엇각 찾기</option>
+            <option value="corresponding">동위각 찾기</option>
+          </select>
         </div>
-        <button id="drawBtn" class="primary">문제 뽑기</button>
-        <div id="timerStatus" class="timer-status">대기 중</div>
+        <button id="newProblemBtn" class="primary">랜덤 문제 만들기</button>
+        <button id="hintBtn">핵심 선분 강조</button>
       </section>
 
-      <section class="card problem-board">
-        <h2>현재 문제</h2>
-        <div id="currentNumber" class="current-number">?</div>
-        <div id="difficultyBadge" class="difficulty-badge hidden"></div>
-        <button id="answerBtn" class="secondary hidden">정답 보기</button>
-        <pre id="answerText" class="answer-text hidden"></pre>
+      <section class="card board">
+        <canvas id="geomCanvas" width="820" height="440"></canvas>
+        <p id="questionText" class="question-text"></p>
       </section>
 
-      <section class="card students">
-        <h2>학생 관리 / 점수 반영</h2>
-        <div class="student-input-row">
-          <input id="studentName" type="text" placeholder="학생 이름 입력" />
-          <button id="addStudentBtn">학생 추가</button>
+      <section class="card answer-panel">
+        <h2>정답 입력</h2>
+        <div class="row wrap">
+          <label for="answerSelect">정답 각 번호</label>
+          <select id="answerSelect"></select>
+          <button id="checkBtn" class="secondary">채점하기</button>
+          <button id="showBtn">정답 보기</button>
         </div>
-        <ul id="studentList" class="student-list"></ul>
+        <p id="resultText" class="result"></p>
       </section>
 
-      <section class="card leaderboard">
-        <h2>실시간 순위</h2>
-        <div id="podium" class="podium"></div>
-        <details>
-          <summary>전체 순위 보기</summary>
-          <ol id="fullRanking" class="full-ranking"></ol>
-        </details>
+      <section class="card examples">
+        <h2>오개념 교정 포인트</h2>
+        <ul>
+          <li>동위각/엇각 <strong>이름 붙이기</strong>는 평행 여부와 무관합니다.</li>
+          <li>하지만 <strong>두 각의 크기가 같다</strong>를 결론내리려면 평행 조건이 필요합니다.</li>
+          <li>모양이 기울어지거나 선분이 많아도, “관련 3개 선분”만 잡으면 해결됩니다.</li>
+        </ul>
       </section>
     </main>
 
